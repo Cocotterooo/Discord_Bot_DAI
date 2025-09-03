@@ -1,1 +1,1 @@
-# Discord_Bot_DAI_JS.
+# Discord_Bot_DAI
