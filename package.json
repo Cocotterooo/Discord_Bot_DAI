@@ -1,0 +1,26 @@
+{
+  "name": "discord_bot_dai_js",
+  "version": "1.0.0",
+  "description": "Bot de la comunidad de discord de la Escuela de Industriales de la UVigo, encargado de la gestión de usuarios, actividades, canales, votaciones, etc.",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "lint": "eslint \"src/**/*.js\" --fix"
+  },
+  "dependencies": {
+    "canvas": "^3.1.2",
+    "colors": "^1.4.0",
+    "discord-api-types": "^0.38.16",
+    "discord.js": "^14.19.1",
+    "node-fetch": "^3.3.2"
+  },
+  "devDependencies": {
+    "eslint": "^8.19.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0"
+  }
+}

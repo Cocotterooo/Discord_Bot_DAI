@@ -1,0 +1,21 @@
+{
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "extends": [
+    "eslint:recommended",
+    "standard"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "rules": {
+    "semi": "off",
+    "comma-dangle": "off",
+    "no-unused-vars": "off",
+    "space-before-function-paren": "off",
+    "indent": "off"
+  }
+}
