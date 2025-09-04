@@ -9,6 +9,7 @@ export const discordConfig = {
     PREPARANDO_SAN_PEPE: '🤑Preparando 𝗦𝗔𝗡 𝗣𝗘𝗣𝗘',
     EN_SAN_PEPE: '¡EN SAN PEPE!',
     MOD: 'Moderando...',
+    INICIO_CURSO: '📚 Inicio de curso',
     state: 'Disfrutando del Veranito',
   },
   COLOR: 0x0099ff,

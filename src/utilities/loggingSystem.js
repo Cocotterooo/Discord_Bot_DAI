@@ -142,6 +142,21 @@ class LoggingSystem {
    * Log de ban
    */
   async logBan(guild, user, reason = 'No especificada') {
+    // Obtener información del autor desde audit logs
+    let author = null;
+    try {
+      const auditLogs = await guild.fetchAuditLogs({
+        type: 22, // MEMBER_BAN_ADD
+        limit: 1
+      });
+      const auditEntry = auditLogs.entries.first();
+      if (auditEntry && auditEntry.target.id === user.id) {
+        author = auditEntry.executor;
+      }
+    } catch (error) {
+      console.error('Error al obtener audit logs para ban:', error);
+    }
+
     const embed = this.createBaseEmbed('🔨 Usuario Baneado', 0xff0000)
       .setDescription(`**${user.tag}** ha sido baneado del servidor`)
       .addFields([
@@ -150,6 +165,12 @@ class LoggingSystem {
       ])
       .setThumbnail(user.displayAvatarURL({ dynamic: true }));
 
+    if (author) {
+      embed.addFields([
+        { name: '🔨 Baneado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+      ]);
+    }
+
     await this.sendLog(embed);
   }
 
@@ -157,12 +178,33 @@ class LoggingSystem {
    * Log de unban
    */
   async logUnban(guild, user) {
+    // Obtener información del autor desde audit logs
+    let author = null;
+    try {
+      const auditLogs = await guild.fetchAuditLogs({
+        type: 23, // MEMBER_BAN_REMOVE
+        limit: 1
+      });
+      const auditEntry = auditLogs.entries.first();
+      if (auditEntry && auditEntry.target.id === user.id) {
+        author = auditEntry.executor;
+      }
+    } catch (error) {
+      console.error('Error al obtener audit logs para unban:', error);
+    }
+
     const embed = this.createBaseEmbed('✅ Usuario Desbaneado', 0x00ff00)
       .setDescription(`**${user.tag}** ha sido desbaneado del servidor`)
       .addFields([
         { name: '👤 Usuario', value: `${user.tag} (${user.id})`, inline: true }
       ])
       .setThumbnail(user.displayAvatarURL({ dynamic: true }));
+
+    if (author) {
+      embed.addFields([
+        { name: '✅ Desbaneado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+      ]);
+    }
 
     await this.sendLog(embed);
   }
@@ -186,6 +228,24 @@ class LoggingSystem {
    * Log de timeout/mute
    */
   async logTimeout(member, duration, reason = 'No especificada') {
+    // Obtener información del autor desde audit logs
+    let author = null;
+    try {
+      const auditLogs = await member.guild.fetchAuditLogs({
+        type: 24, // MEMBER_UPDATE
+        limit: 5
+      });
+      const auditEntry = auditLogs.entries.find(entry =>
+        entry.target.id === member.id &&
+        entry.changes?.some(change => change.key === 'communication_disabled_until')
+      );
+      if (auditEntry) {
+        author = auditEntry.executor;
+      }
+    } catch (error) {
+      console.error('Error al obtener audit logs para timeout:', error);
+    }
+
     const embed = this.createBaseEmbed('🔇 Usuario en Timeout', 0xff6b00)
       .setDescription(`**${member.user.tag}** ha sido puesto en timeout`)
       .addFields([
@@ -194,6 +254,12 @@ class LoggingSystem {
         { name: '📝 Razón', value: reason, inline: false }
       ])
       .setThumbnail(member.user.displayAvatarURL({ dynamic: true }));
+
+    if (author) {
+      embed.addFields([
+        { name: '🔇 Timeout aplicado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+      ]);
+    }
 
     await this.sendLog(embed);
   }
@@ -265,6 +331,24 @@ class LoggingSystem {
     const addedRoles = newMember.roles.cache.filter(role => !oldMember.roles.cache.has(role.id));
     const removedRoles = oldMember.roles.cache.filter(role => !newMember.roles.cache.has(role.id));
 
+    // Obtener información del autor desde audit logs para cambios de roles
+    let author = null;
+    try {
+      const auditLogs = await newMember.guild.fetchAuditLogs({
+        type: 25, // MEMBER_ROLE_UPDATE
+        limit: 5
+      });
+      const auditEntry = auditLogs.entries.find(entry =>
+        entry.target.id === newMember.id &&
+        entry.changes?.some(change => change.key === '$add' || change.key === '$remove')
+      );
+      if (auditEntry) {
+        author = auditEntry.executor;
+      }
+    } catch (error) {
+      console.error('Error al obtener audit logs para cambio de roles:', error);
+    }
+
     if (addedRoles.size > 0) {
       const embed = this.createBaseEmbed('➕ Roles Añadidos', 0x00ff00)
         .setDescription(`Se añadieron roles a **${newMember.user.tag}**`)
@@ -273,6 +357,12 @@ class LoggingSystem {
           { name: '🏷️ Roles añadidos', value: addedRoles.map(role => `<@&${role.id}>`).join(', '), inline: false }
         ])
         .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true }));
+
+      if (author) {
+        embed.addFields([
+          { name: '👤 Modificado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+        ]);
+      }
 
       await this.sendLog(embed);
     }
@@ -286,6 +376,12 @@ class LoggingSystem {
         ])
         .setThumbnail(newMember.user.displayAvatarURL({ dynamic: true }));
 
+      if (author) {
+        embed.addFields([
+          { name: '👤 Modificado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+        ]);
+      }
+
       await this.sendLog(embed);
     }
   }
@@ -295,12 +391,32 @@ class LoggingSystem {
    * Log de creación de canal
    */
   async logChannelCreate(channel) {
+    // Ignorar canales de voz en la categoría específica
+    if (channel.type === ChannelType.GuildVoice && channel.parentId === '1292969422868320397') {
+      return;
+    }
+
     const channelTypes = {
       [ChannelType.GuildText]: '💬 Texto',
       [ChannelType.GuildVoice]: '🔊 Voz',
       [ChannelType.GuildCategory]: '📁 Categoría',
       [ChannelType.GuildStageVoice]: '🎭 Escenario'
     };
+
+    // Obtener información del autor desde audit logs
+    let author = null;
+    try {
+      const auditLogs = await channel.guild.fetchAuditLogs({
+        type: 10, // CHANNEL_CREATE
+        limit: 1
+      });
+      const auditEntry = auditLogs.entries.first();
+      if (auditEntry && auditEntry.target.id === channel.id) {
+        author = auditEntry.executor;
+      }
+    } catch (error) {
+      console.error('Error al obtener audit logs para creación de canal:', error);
+    }
 
     const embed = this.createBaseEmbed('➕ Canal Creado', 0x00ff00)
       .setDescription('Se creó un nuevo canal')
@@ -310,6 +426,12 @@ class LoggingSystem {
         { name: '🆔 ID', value: channel.id, inline: true }
       ]);
 
+    if (author) {
+      embed.addFields([
+        { name: '👤 Creado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+      ]);
+    }
+
     await this.sendLog(embed);
   }
 
@@ -317,12 +439,32 @@ class LoggingSystem {
    * Log de eliminación de canal
    */
   async logChannelDelete(channel) {
+    // Ignorar canales de voz en la categoría específica
+    if (channel.type === ChannelType.GuildVoice && channel.parentId === '1292969422868320397') {
+      return;
+    }
+
     const channelTypes = {
       [ChannelType.GuildText]: '💬 Texto',
       [ChannelType.GuildVoice]: '🔊 Voz',
       [ChannelType.GuildCategory]: '📁 Categoría',
       [ChannelType.GuildStageVoice]: '🎭 Escenario'
     };
+
+    // Obtener información del autor desde audit logs
+    let author = null;
+    try {
+      const auditLogs = await channel.guild.fetchAuditLogs({
+        type: 12, // CHANNEL_DELETE
+        limit: 1
+      });
+      const auditEntry = auditLogs.entries.first();
+      if (auditEntry && auditEntry.target.id === channel.id) {
+        author = auditEntry.executor;
+      }
+    } catch (error) {
+      console.error('Error al obtener audit logs para eliminación de canal:', error);
+    }
 
     const embed = this.createBaseEmbed('🗑️ Canal Eliminado', 0xff0000)
       .setDescription('Se eliminó un canal')
@@ -331,6 +473,12 @@ class LoggingSystem {
         { name: '📋 Tipo', value: channelTypes[channel.type] || 'Desconocido', inline: true },
         { name: '🆔 ID', value: channel.id, inline: true }
       ]);
+
+    if (author) {
+      embed.addFields([
+        { name: '👤 Eliminado por', value: `<@${author.id}> (${author.tag})`, inline: false }
+      ]);
+    }
 
     await this.sendLog(embed);
   }

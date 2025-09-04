@@ -7,13 +7,16 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
-    "lint": "eslint \"src/**/*.js\" --fix"
+    "lint": "eslint \"src/**/*.js\" --fix",
+    "api-test": "curl http://localhost:3000/health && curl http://localhost:3000/totalUsers"
   },
   "dependencies": {
     "canvas": "^3.1.2",
     "colors": "^1.4.0",
+    "cors": "^2.8.5",
     "discord-api-types": "^0.38.16",
     "discord.js": "^14.19.1",
+    "express": "5.1.0",
     "node-fetch": "^3.3.2"
   },
   "devDependencies": {

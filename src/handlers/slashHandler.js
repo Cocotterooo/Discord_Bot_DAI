@@ -1,4 +1,4 @@
-﻿import { readdir, stat } from 'fs/promises'
+import { readdir, stat } from 'fs/promises'
 import { join, dirname } from 'path'
 import { fileURLToPath, pathToFileURL } from 'url'
 

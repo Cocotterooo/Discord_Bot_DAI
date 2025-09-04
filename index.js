@@ -27,6 +27,9 @@ import { fileURLToPath } from 'url';
 // Importar funciones utilitarias
 import { stateError } from './src/utilities/stateError.js';
 
+// Importar servidor API
+import APIServer from './src/api/server.js';
+
 // Importar handlers para la gestión de comandos y eventos
 import { loadSlash } from './src/handlers/slashHandler.js';
 import { loadButtons } from './src/handlers/buttonHandler.js';
@@ -51,10 +54,10 @@ const client = new Client({
     Partials.Reaction,
   ],
   presence: {
-    status: PresenceUpdateStatus.Idle,
+    status: PresenceUpdateStatus.Online,
     activities: [
       {
-        name: discordConfig.activities.state || 'EEI - UVigo',
+        name: discordConfig.activities.INICIO_CURSO || 'EEI - UVigo',
         type: ActivityType.Custom,
       },
     ],
@@ -71,6 +74,9 @@ client.commands = new Collection();
 client.slashCommands = new Collection();
 client.buttons = new Collection();
 client.services = {};
+
+// MARK: 📌 Inicializar servidor API
+const apiServer = new APIServer(client);
 
 // MARK: 📌 Manejo de interacciones
 client.on('interactionCreate', async (interaction) => {
@@ -226,6 +232,10 @@ client.on('ready', async () => {
     await loadServices();
     console.log('✅ Servicios cargados correctamente'.green);
 
+    // Iniciar servidor API
+    console.log('🔄 Iniciando servidor API...'.blue);
+    apiServer.start();
+
     // Limpiar canales de voz personalizados existentes
     console.log('🔄 Limpiando canales de voz personalizados...'.blue);
     const { cleanupExistingChannels } = await import('./src/events/buttons/canales_voz/voiceChannelHandler.js');
@@ -235,4 +245,19 @@ client.on('ready', async () => {
     console.error('❌ Error durante la inicialización:'.red, error);
     stateError(client);
   }
+});
+
+// MARK: 📌 Manejo de cierre del bot
+process.on('SIGINT', () => {
+  console.log('\n🔄 Cerrando bot...'.yellow);
+  apiServer.stop();
+  client.destroy();
+  process.exit(0);
+});
+
+process.on('SIGTERM', () => {
+  console.log('\n🔄 Cerrando bot...'.yellow);
+  apiServer.stop();
+  client.destroy();
+  process.exit(0);
 });
