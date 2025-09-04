@@ -48,7 +48,8 @@ export const discordConfig = {
       SPACELAB: '1300183021416349788',
       MOTORSPORT: '1288508046057930804',
       CES: '1300189175747842068'
-    }
+    },
+    LOGS_CHANNEL: '1395110127614296165' // Cambiar por el ID real del canal de logs
   }
 }
 

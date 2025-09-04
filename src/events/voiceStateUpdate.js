@@ -4,21 +4,29 @@ import {
   stopInactivityTimer,
   activeChannels
 } from './buttons/canales_voz/voiceChannelHandler.js'
+import LoggingSystem from '../utilities/loggingSystem.js'
 
 export default {
   name: 'voiceStateUpdate',
   async execute(oldState, newState) {
     const user = newState.member?.user
-    if (!user) return // Validación por si no hay usuario
+    if (!user || user.bot) return // Validación por si no hay usuario o es un bot
+
+    const logger = new LoggingSystem(newState.client || oldState.client)
 
     // Manejar canales de voz personalizados
     await handleCustomVoiceChannels(oldState, newState)
 
-    // Log básico
+    // Logging del sistema general de canales de voz
     if (!oldState.channel && newState.channel) {
-      console.log(`${user.tag} se unió al canal de voz ${newState.channel.name}`)
+      // Usuario se unió a un canal de voz
+      await logger.logVoiceChannelJoin(newState.member, newState.channel)
     } else if (oldState.channel && !newState.channel) {
-      console.log(`${user.tag} salió del canal de voz ${oldState.channel.name}`)
+      // Usuario salió de un canal de voz
+      await logger.logVoiceChannelLeave(oldState.member, oldState.channel)
+    } else if (oldState.channel && newState.channel && oldState.channel.id !== newState.channel.id) {
+      // Usuario se movió entre canales de voz
+      await logger.logVoiceChannelMove(newState.member, oldState.channel, newState.channel)
     }
   }
 }
